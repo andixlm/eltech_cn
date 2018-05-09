@@ -65,9 +65,6 @@ namespace SmartHomeThermometer
 
         private Thread _ListenerThread;
 
-        private Mutex _ReceiveMutex;
-        private Mutex _SendMutex;
-
         private Mutex _DataMutex;
 
         private List<string> _Cache;
@@ -89,9 +86,6 @@ namespace SmartHomeThermometer
 
             _UpdateInterval = Thermometer.DEFAULT_UPDATE_INTERVAL;
             UpdateIntervalTextBlock.Text = _UpdateInterval.ToString();
-
-            _ReceiveMutex = new Mutex();
-            _SendMutex = new Mutex();
 
             _DataMutex = new Mutex();
 
@@ -206,22 +200,10 @@ namespace SmartHomeThermometer
                 }
                 catch (ThreadAbortException)
                 {
-                    try
+                    Log(NETWORK_LOG_LABEL + "Disconnected." + '\n');
+                    if (_VerboseLogging)
                     {
-                        _ReceiveMutex.ReleaseMutex();
-
-                        Log(NETWORK_LOG_LABEL + "Disconnected." + '\n');
-                        if (_VerboseLogging)
-                        {
-                            Log(NETWORK_LOG_LABEL + "Listener thread was terminated" + '\n');
-                        }
-                    }
-                    catch (ApplicationException)
-                    {
-                        if (_VerboseLogging)
-                        {
-                            Log(THERMOMETER_LOG_LABEL + "Mutex's been tried to be released not by the owner thread." + '\n');
-                        }
+                        Log(NETWORK_LOG_LABEL + "Listener thread was terminated" + '\n');
                     }
                 }
             }));
@@ -360,8 +342,6 @@ namespace SmartHomeThermometer
                 return;
             }
 
-            _SendMutex.WaitOne();
-
             try
             {
                 NetworkStream stream = _Socket.GetStream();
@@ -381,8 +361,6 @@ namespace SmartHomeThermometer
                     Log(CONNECTION_LOG_LABEL + "Connection's unavailable." + '\n');
                 }
             }
-
-            _SendMutex.ReleaseMutex();
         }
 
         private void Receive(ref TcpClient socket, ref byte[] bytes)
@@ -391,8 +369,6 @@ namespace SmartHomeThermometer
             {
                 return;
             }
-
-            _ReceiveMutex.WaitOne();
 
             try
             {
@@ -412,8 +388,6 @@ namespace SmartHomeThermometer
                     Log(CONNECTION_LOG_LABEL + "Connection's unavailable." + '\n');
                 }
             }
-
-            _ReceiveMutex.ReleaseMutex();
         }
 
         private void SendInfo()
