@@ -457,7 +457,10 @@ namespace SmartHomeThermometer
             byte[] bytes = Encoding.Unicode.GetBytes(NETWORK_METHOD_TO_INVOKE_ARG + method + DELIMITER);
             Send(bytes);
 
-            Log(NETWORK_LOG_LABEL + "Sent method to close connection" + '\n');
+            if (_VerboseLogging)
+            {
+                Log(NETWORK_LOG_LABEL + "Sent method: " + method + '\n');
+            }
         }
 
         string CacheData(string data, ref List<string> cache)
