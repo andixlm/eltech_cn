@@ -11,18 +11,21 @@ namespace SmartHomeThermometer
 {
     class Thermometer : IDisposable
     {
+        // Температура по умолчанию.
         public static readonly double DEFAULT_TEMPERATURE = 0.0;
+        // Значение изменения температуры.
         public static readonly double DELTA_TEMPERATURE = 1.0;
-
+        // Период обновления по умолчанию.
         public static readonly int DEFAULT_UPDATE_INTERVAL = 1;
-
+        // Генератор случайных чисел.
         private static readonly Random sRandom = new Random();
-
+        // callback, вызываемый при обновлении температуры.
         public delegate void OnTemperatureUpdateFunc(double temperature);
-
+        // Мьютекс для синхронизации обновления данных.
         private Mutex _Mutex;
+        // Поток, в котором происходит генерация температуры.
         private Thread _WorkerThread;
-
+        // Температура.
         private double _Temperature;
         public double Temperature
         {
@@ -32,6 +35,7 @@ namespace SmartHomeThermometer
             }
         }
 
+        // Период обновления.
         private int _UpdateInterval;
         public int UpdateInterval
         {
@@ -54,7 +58,7 @@ namespace SmartHomeThermometer
                 _Mutex.ReleaseMutex();
             }
         }
-
+        // Время последнего обновления.
         private DateTime _LastUpdateTime;
         public DateTime LastUpdateTime
         {
@@ -63,7 +67,7 @@ namespace SmartHomeThermometer
                 return _LastUpdateTime;
             }
         }
-
+        // callback, вызываемый при обновлении температуры.
         private OnTemperatureUpdateFunc _OnTemperatureUpdated;
         public OnTemperatureUpdateFunc OnTemperatureUpdate
         {
@@ -89,6 +93,7 @@ namespace SmartHomeThermometer
             Dispose();
         }
 
+        // Генерация температуры.
         private void Run()
         {
             while (true)
@@ -102,11 +107,11 @@ namespace SmartHomeThermometer
                 Thread.Sleep(interval);
             }
         }
-
+        // Обновление температуры.
         public void UpdateTemperature()
         {
             _Mutex.WaitOne();
-
+            // Прибавляется случайное значение от -1.0 до 1.0.
             _Temperature += (sRandom.NextDouble() < 0.5 ? -1.0 : 1.0) * sRandom.NextDouble() * DELTA_TEMPERATURE;
             _LastUpdateTime = DateTime.Now;
 
